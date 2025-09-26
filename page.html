@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Twin - Koutaiba Diab</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #111111;
+            --bg-tertiary: #1a1a1a;
+            --bg-chat: #0d1117;
+            --text-primary: #ffffff;
+            --text-secondary: #a3a3a3;
+            --text-muted: #6b7280;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --accent-glow: rgba(59, 130, 246, 0.3);
+            --border: #2a2a2a;
+            --border-light: #333333;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(16, 185, 129, 0.06) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+            animation: backgroundShift 20s ease-in-out infinite;
+        }
+
+        @keyframes backgroundShift {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 3rem 2rem 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, var(--accent-glow), transparent);
+            animation: rotate 20s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes rotate {
+            to { transform: rotate(360deg); }
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        header h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent), #8b5cf6);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
+            animation: slideUp 0.8s ease-out;
+        }
+
+        header p {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+            animation: slideUp 0.8s ease-out 0.2s both;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Chat Container */
+        .chat-container {
+            flex: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 0 2rem;
+            display: flex;
+            flex-direction: column;
+            animation: fadeIn 1s ease-out 0.4s both;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .chat-wrapper {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 70vh;
+            min-height: 500px;
+            position: relative;
+        }
+
+        .chat-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        }
+
+        /* Messages */
+        .messages {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            position: relative;
+        }
+
+        .messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .messages::-webkit-scrollbar-thumb {
+            background: var(--border-light);
+            border-radius: 3px;
+        }
+
+        .messages::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        .message {
+            margin-bottom: 2rem;
+            display: flex;
+            animation: messageSlide 0.4s ease-out;
+        }
+
+        @keyframes messageSlide {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.bot {
+            justify-content: flex-start;
+        }
+
+        .message .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin: 0 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .message.user .avatar {
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            color: white;
+            order: 1;
+        }
+
+        .message.bot .avatar {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-light);
+            color: var(--text-secondary);
+        }
+
+        .message .bubble {
+            max-width: 70%;
+            padding: 1.25rem 1.5rem;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        .message.user .bubble {
+            background: linear-gradient(135deg, var(--accent), #1e40af);
+            color: white;
+            border-bottom-right-radius: 6px;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .message.bot .bubble {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 6px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Typing indicator */
+        .typing-indicator {
+            display: none;
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            border-bottom-left-radius: 6px;
+            margin-left: 55px;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            animation: typingPulse 1.4s ease-in-out infinite both;
+        }
+
+        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typingPulse {
+            0%, 80%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Input Container */
+        .input-container {
+            padding: 2rem;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            position: relative;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+            position: relative;
+        }
+
+        .input-field {
+            flex: 1;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 1rem 1.25rem;
+            font-size: 1rem;
+            color: var(--text-primary);
+            resize: none;
+            min-height: 50px;
+            max-height: 120px;
+            line-height: 1.5;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+            background: var(--bg-chat);
+        }
+
+        .input-field::placeholder {
+            color: var(--text-muted);
+        }
+
+        .send-button {
+            background: linear-gradient(135deg, var(--accent), #1e40af);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .send-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px var(--accent-glow);
+        }
+
+        .send-button:active {
+            transform: translateY(0);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .send-icon {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+            transition: transform 0.3s ease;
+        }
+
+        .send-button:hover .send-icon {
+            transform: translateX(2px);
+        }
+
+        /* Empty state */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            opacity: 0.6;
+        }
+
+        .empty-icon {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 1.5rem;
+            opacity: 0.3;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .empty-state p {
+            color: var(--text-muted);
+            max-width: 400px;
+        }
+
+        /* Quick suggestions */
+        .suggestions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+            justify-content: center;
+        }
+
+        .suggestion {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .suggestion:hover {
+            background: var(--accent);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header {
+                padding: 2rem 1rem 1.5rem;
+            }
+
+            .chat-container {
+                padding: 0 1rem;
+            }
+
+            .messages {
+                padding: 1.5rem;
+            }
+
+            .message .bubble {
+                max-width: 85%;
+            }
+
+            .input-container {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>Koutaiba Diab</h1>
+            <p>Personal Digital Twin • Ask anything and get detailed answers based on my profile, experience, and knowledge.</p>
+        </div>
+    </header>
+
+    <div class="chat-container">
+        <div class="chat-wrapper">
+            <div class="messages" id="messages">
+                <div class="empty-state" id="emptyState">
+                    <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        <path d="M8 10h.01M12 10h.01M16 10h.01"></path>
+                    </svg>
+                    <h3>Start a Conversation</h3>
+                    <p>Ask me anything about Koutaiba's background, skills, projects, or get insights based on his experience.</p>
+                    <div class="suggestions">
+                        <span class="suggestion" data-text="Tell me about your background">Your background</span>
+                        <span class="suggestion" data-text="What are your main skills?">Your skills</span>
+                        <span class="suggestion" data-text="What projects have you worked on?">Your projects</span>
+                        <span class="suggestion" data-text="What's your experience with AI?">AI experience</span>
+                    </div>
+                </div>
+
+                <div class="typing-indicator" id="typingIndicator">
+                    <div class="typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <textarea
+                        id="questionInput"
+                        class="input-field"
+                        placeholder="Ask me anything about Koutaiba..."
+                        rows="1"
+                    ></textarea>
+                    <button id="sendBtn" class="send-button">
+                        <svg class="send-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22,2 15,22 11,13 2,9"></polygon>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const messagesContainer = document.getElementById('messages');
+        const questionInput = document.getElementById('questionInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const emptyState = document.getElementById('emptyState');
+        const typingIndicator = document.getElementById('typingIndicator');
+
+        let messageCount = 0;
+
+        // Auto-resize textarea
+        questionInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+
+        // Suggestion clicks
+        document.querySelectorAll('.suggestion').forEach(suggestion => {
+            suggestion.addEventListener('click', () => {
+                questionInput.value = suggestion.dataset.text;
+                questionInput.focus();
+                sendMessage();
+            });
+        });
+
+        // Append a message to the chat
+        function appendMessage(text, sender) {
+            if (emptyState.style.display !== 'none') {
+                emptyState.style.display = 'none';
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', sender);
+
+            const avatar = document.createElement('div');
+            avatar.classList.add('avatar');
+            avatar.textContent = sender === 'user' ? 'YOU' : 'KD';
+
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.classList.add('bubble');
+            bubbleDiv.textContent = text;
+
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(bubbleDiv);
+            messagesContainer.appendChild(messageDiv);
+
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            messageCount++;
+        }
+
+        function showTyping() {
+            typingIndicator.style.display = 'block';
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function hideTyping() {
+            typingIndicator.style.display = 'none';
+        }
+
+        // Call API
+        async function askQuestion(question) {
+            appendMessage(question, 'user');
+            questionInput.value = '';
+            questionInput.style.height = 'auto';
+            sendBtn.disabled = true;
+
+            showTyping();
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/ask', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ question })
+                });
+
+                hideTyping();
+
+                if (!response.ok) {
+                    throw new Error('API Error');
+                }
+
+                const data = await response.json();
+
+                // Simulate a slight delay for more natural feel
+                setTimeout(() => {
+                    appendMessage(data.answer, 'bot');
+                }, 500);
+
+            } catch (err) {
+                hideTyping();
+                appendMessage("I'm having trouble connecting to my knowledge base right now. Please check if the API is running and try again.", 'bot');
+                console.error(err);
+            } finally {
+                sendBtn.disabled = false;
+            }
+        }
+
+        function sendMessage() {
+            const question = questionInput.value.trim();
+            if (question && !sendBtn.disabled) {
+                askQuestion(question);
+            }
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+
+        questionInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Focus input on load
+        questionInput.focus();
+    </script>
+</body>
+</html>
